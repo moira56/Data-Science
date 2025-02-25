@@ -46,5 +46,5 @@ This project analyzes taxi trip data from New York City and aims to predict taxi
 - **Notebook Environment:** Jupyter Notebook
 
 ## Authors
-- [Your Name]
-- [Collaborator's Name (if applicable)]
+- Moira Čekada
+

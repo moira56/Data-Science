@@ -1,50 +1,87 @@
 # New York City Taxi Fare Prediction
 
-## Project Overview
-This project analyzes taxi trip data from New York City and aims to predict taxi fares based on various trip characteristics. The dataset used is **New York City Taxi Trips 2019**, available on [Kaggle](https://www.kaggle.com/datasets/dhruvildave/new-york-city-taxi-trips-2019/data). 
+This project is part of the Data Science Working Group at Code for San Francisco. Other DSWG projects can be found at the [main GitHub repo](https://github.com/sfbrigade/data-science-wg).
 
-## Objectives
-- Predict taxi fare prices (regression task).
-- Classify trips into predefined fare categories (classification task).
-- Perform exploratory data analysis (EDA) to identify patterns.
-- Compare different machine learning models.
-- Investigate clustering techniques for trip segmentation.
+#### -- Project Status: Active
 
-## Methodology
+## Project Intro/Objective
 
-### Phase 1: Data Analysis and Preparation
-- **Problem Definition:** Identifying key factors influencing taxi fares.
-- **Data Cleaning:** Handling missing values, removing outliers, normalization.
-- **Feature Engineering:** Creating additional features like trip duration, time of day, and geospatial features.
-- **Exploratory Data Analysis (EDA):** Visualization of data distributions, correlation analysis.
-- **Dimensionality Reduction:** Applying PCA and UMAP.
-- **Hypothesis Testing:** Formulating and testing statistical hypotheses.
+The purpose of this project is to analyze and model taxi trip data from New York City to predict fare amounts based on various trip characteristics. This analysis aims to provide insights into fare structures and assist in optimizing pricing strategies.
 
-### Phase 2: Machine Learning Implementation
-- **Model Building:** 
-  - Implementing k-Nearest Neighbors (kNN) from scratch using NumPy.
-  - Training at least two supervised learning models using `sklearn`.
-  - Applying ensemble models (bagging and boosting).
-  - Developing a deep learning model using TensorFlow or PyTorch.
-  - Clustering analysis using at least two clustering algorithms.
-- **Model Evaluation:** Comparing models using RMSE, accuracy, and F1-score.
-- **Operationalization:** Documenting findings and discussing deployment strategies.
+### Methods Used
 
-## Deliverables
-- **Mid-Journey Report** – Summary of data preprocessing and analysis.
-- **Final Report** – Detailed documentation, code snippets, and visualizations.
-- **Executive Summary** – Two-page summary for non-technical stakeholders.
-- **Codebase** – Python and R scripts, including preprocessing and model training.
-- **Trained Models** – Saved models for potential deployment.
-- **Final Presentation** – 15-minute summary of results and methodology.
+- Data Cleaning and Preprocessing
+- Exploratory Data Analysis (EDA)
+- Feature Engineering
+- Machine Learning Modeling
+- Regression Analysis
+- Data Visualization
 
-## Tools & Technologies
-- **Languages:** Python, R
-- **Libraries:** Pandas, NumPy, Scikit-learn, Matplotlib, Seaborn, TensorFlow, PyTorch
-- **Version Control:** GitHub
-- **Documentation Format:** LaTeX (IEEE style)
-- **Notebook Environment:** Jupyter Notebook
+### Technologies
 
-## Authors
-- Moira Čekada
+- Python
+- Pandas, NumPy
+- Scikit-learn
+- Matplotlib, Seaborn
+- Jupyter Notebook
 
+## Project Description
+
+In this project, we utilize the [New York City Taxi Trips 2019 dataset](https://www.kaggle.com/datasets/dhruvildave/new-york-city-taxi-trips-2019/data) to develop predictive models for taxi fares. The dataset includes detailed information on taxi trips, such as pickup and drop-off locations, trip distances, passenger counts, and fare amounts.
+
+Key steps in the project include:
+
+1. **Data Cleaning:** Handling missing values, removing duplicates, and correcting data types.
+2. **Exploratory Data Analysis:** Visualizing data distributions and relationships between variables to identify patterns and outliers.
+3. **Feature Engineering:** Creating new features like trip duration, distance calculations, and time-based features (e.g., hour of day, day of week).
+4. **Modeling:** Applying regression techniques to predict fare amounts and evaluating model performance using metrics like RMSE.
+5. **Validation:** Testing the model on unseen data to assess its generalization capability.
+
+## Needs of this Project
+
+- Data Scientists with experience in regression modeling.
+- Data Engineers skilled in data cleaning and preprocessing.
+- Visualization experts to create insightful plots and dashboards.
+- Project Managers to coordinate tasks and timelines.
+
+## Getting Started
+
+1. **Clone the repository:**  
+   `git clone https://github.com/moira56/Data-Science.git`
+
+2. **Navigate to the project directory:**  
+   `cd Data-Science`
+
+3. **Create and activate a virtual environment (optional but recommended):**  
+   `python -m venv venv`  
+   `source venv/bin/activate`  *(On macOS/Linux)*  
+   `venv\Scripts\activate`  *(On Windows)*  
+
+4. **Install required dependencies:**  
+   `pip install -r requirements.txt`
+
+5. **Download the dataset:**  
+   - The dataset can be accessed from [Kaggle](https://www.kaggle.com/datasets/dhruvildave/new-york-city-taxi-trips-2019/data).  
+   - Place the dataset in the `data/` directory.
+
+6. **Run the exploratory data analysis notebook:**  
+   `jupyter notebook`  
+   - Open `notebooks/EDA.ipynb` and execute all cells to explore the dataset.
+
+7. **Train models and evaluate performance:**  
+   - Open and run `notebooks/modeling.ipynb` to train and compare different machine learning models.
+
+8. **Generate final report and results:**  
+   - Review `reports/final_report.pdf` for findings, conclusions, and model performance.
+
+9. **Deactivate the virtual environment (if used):**  
+   `deactivate`
+
+## Repository Structure
+
+/project-directory │── data/ # Raw and processed dataset files
+│── notebooks/ # Jupyter notebooks for data analysis and modeling
+│── models/ # Trained models
+│── src/ # Scripts for data processing and model training
+│── reports/ # Documentation and reports
+│── README.md # Project overview and instructions

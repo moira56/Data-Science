@@ -1,4 +1,1 @@
 data/**/*.sqlite
-data/combined_data.csv
-data/normalized_data.csv
-data/standardized_data.csv

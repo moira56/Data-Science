@@ -1,87 +1,102 @@
 # New York City Taxi Fare Prediction
 
-This project is part of the Data Science Working Group at Code for San Francisco. Other DSWG projects can be found at the [main GitHub repo](https://github.com/sfbrigade/data-science-wg).
+## Overview
+This project aims to predict taxi fare amounts in New York City using machine learning techniques. The dataset includes taxi trip records, such as pickup/drop-off locations, timestamps, passenger counts, trip distances, and fare amounts. 
 
-#### -- Project Status: Active
+## Objectives
+- Predict taxi fare amounts using regression models.
+- Classify trips into predefined fare categories.
+- Analyze ride patterns across geography and time.
+- Perform feature engineering to improve predictive performance.
+- Compare different machine learning models and evaluate their effectiveness.
 
-## Project Intro/Objective
+## Dataset
+- **Source:** [Kaggle - NYC Taxi Trips 2019](https://www.kaggle.com/datasets/dhruvildave/new-york-city-taxi-trips-2019/data)
+- **Features:**
+  - `tpep_pickup_datetime`, `tpep_dropoff_datetime` (timestamp features)
+  - `trip_distance`, `trip_duration`
+  - `fare_amount`, `passenger_count`
+  - `PULocationID`, `DOLocationID`, `RateCodeID`, `payment_type`
+  
+## Methodology
+### Data Preprocessing
+- Handle missing values and filter out invalid data.
+- Parse datetime fields to extract temporal features.
+- Normalize and standardize numerical features.
+- Encode categorical variables for model training.
 
-The purpose of this project is to analyze and model taxi trip data from New York City to predict fare amounts based on various trip characteristics. This analysis aims to provide insights into fare structures and assist in optimizing pricing strategies.
+### Exploratory Data Analysis (EDA)
+- Visualize trip distributions using histograms and boxplots.
+- Identify correlations using heatmaps and scatter plots.
+- Perform dimensionality reduction (PCA, UMAP) to uncover patterns.
 
-### Methods Used
+### Feature Engineering
+- Extract features like `trip_duration`, `average_speed`, `hour_of_day`, `day_of_week`.
+- Categorize pickup times into `Morning`, `Afternoon`, `Evening`, and `Night`.
+- One-hot encode pickup/drop-off boroughs.
+- Create binary features for Manhattan and airport locations.
 
-- Data Cleaning and Preprocessing
-- Exploratory Data Analysis (EDA)
-- Feature Engineering
-- Machine Learning Modeling
-- Regression Analysis
-- Data Visualization
+### Model Selection
+- **Regression:** Linear Regression, Random Forest, Gradient Boosting.
+- **Classification:** Logistic Regression, Decision Trees.
+- **Clustering:** K-Means, DBSCAN for location-based segmentation.
+- **Deep Learning:** Neural network model using TensorFlow/PyTorch.
 
-### Technologies
-
-- Python
-- Pandas, NumPy
-- Scikit-learn
-- Matplotlib, Seaborn
-- Jupyter Notebook
-
-## Project Description
-
-In this project, we utilize the [New York City Taxi Trips 2019 dataset](https://www.kaggle.com/datasets/dhruvildave/new-york-city-taxi-trips-2019/data) to develop predictive models for taxi fares. The dataset includes detailed information on taxi trips, such as pickup and drop-off locations, trip distances, passenger counts, and fare amounts.
-
-Key steps in the project include:
-
-1. **Data Cleaning:** Handling missing values, removing duplicates, and correcting data types.
-2. **Exploratory Data Analysis:** Visualizing data distributions and relationships between variables to identify patterns and outliers.
-3. **Feature Engineering:** Creating new features like trip duration, distance calculations, and time-based features (e.g., hour of day, day of week).
-4. **Modeling:** Applying regression techniques to predict fare amounts and evaluating model performance using metrics like RMSE.
-5. **Validation:** Testing the model on unseen data to assess its generalization capability.
-
-## Needs of this Project
-
-- Data Scientists with experience in regression modeling.
-- Data Engineers skilled in data cleaning and preprocessing.
-- Visualization experts to create insightful plots and dashboards.
-- Project Managers to coordinate tasks and timelines.
+### Model Evaluation
+- Compare performance using RMSE, MAE, and R² scores.
+- Perform hyperparameter tuning with GridSearchCV.
+- Implement cross-validation for robust evaluation.
 
 ## Getting Started
+### Prerequisites
+- Python 3.x
+- Jupyter Notebook
+- Required Python libraries (see `requirements.txt`)
 
-1. **Clone the repository:**  
-   `git clone https://github.com/moira56/Data-Science.git`
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/moira56/Data-Science.git
 
-2. **Navigate to the project directory:**  
-   `cd Data-Science`
+# Navigate to the project directory
+cd Data-Science
 
-3. **Create and activate a virtual environment (optional but recommended):**  
-   `python -m venv venv`  
-   `source venv/bin/activate`  *(On macOS/Linux)*  
-   `venv\Scripts\activate`  *(On Windows)*  
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # For macOS/Linux
+# venv\Scripts\activate  # For Windows (uncomment this line)
 
-4. **Install required dependencies:**  
-   `pip install -r requirements.txt`
+# Install dependencies
+pip install -r requirements.txt
 
-5. **Download the dataset:**  
-   - The dataset can be accessed from [Kaggle](https://www.kaggle.com/datasets/dhruvildave/new-york-city-taxi-trips-2019/data).  
-   - Place the dataset in the `data/` directory.
 
-6. **Run the exploratory data analysis notebook:**  
-   `jupyter notebook`  
-   - Open `notebooks/EDA.ipynb` and execute all cells to explore the dataset.
+# Ensure necessary directories exist
+mkdir -p taxi_data/2019
+mkdir -p taxi_data/taxi_zones
 
-7. **Train models and evaluate performance:**  
-   - Open and run `notebooks/modeling.ipynb` to train and compare different machine learning models.
+# Move to the data directory
+cd taxi_data
 
-8. **Generate final report and results:**  
-   - Review `reports/final_report.pdf` for findings, conclusions, and model performance.
+# Check if the taxi zone lookup file exists
+if [ ! -f "taxi_zone_lookup.csv" ]; then
+    echo "Warning: 'taxi_zone_lookup.csv' not found! Make sure to place it in the taxi_data directory."
+fi
 
-9. **Deactivate the virtual environment (if used):**  
-   `deactivate`
+# Move back to the main project directory
+cd ..
 
-## Repository Structure
+### Running Notebooks
+jupyter notebook
 
-/project-directory │── data/ # Raw and processed dataset files
-│── notebooks/ # Jupyter notebooks for data analysis and modeling
-│── models/ # Trained models
-│── src/ # Scripts for data processing and model training
-│── reports/ # Documentation and reports
-│── README.md # Project overview and instructions
+### Running Scripts
+python Taxi_dataset_part1.py
+```
+### Contributors
+Data Scientists: Model development and feature engineering.
+Data Engineers: Data cleaning and preprocessing.
+Analysts: EDA, visualization, and statistical analysis
+
+###  Deliverables
+Mid-Journey Report: Data analysis and preprocessing results.
+Final Report: Comprehensive documentation with models and insights.
+Presentation: Summary of findings and recommendations.

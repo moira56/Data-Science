@@ -89,7 +89,7 @@ cd ..
 jupyter notebook
 
 ### Running Scripts
-python Taxi_dataset_part1.py
+python Taxi_dataset_.py
 ```
 ### Contributors
 Data Scientists: Model development and feature engineering.

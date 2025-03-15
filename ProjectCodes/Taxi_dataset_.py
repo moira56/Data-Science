@@ -25,86 +25,58 @@ import sqlite3
 import numpy as np
 import os
 
-def get_table_name(conn):
-    """Retrieve the first available table name from the SQLite database."""
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    table = cursor.fetchone()  # Get the first table
-    return table[0] if table else None
-
 def load_and_sample(data_dir, sample_frac=0.15):
-    """Load and sample data from SQLite files."""
     all_dfs = []
-    
-    # Check if the directory exists
-    if not os.path.exists(data_dir):
-        raise FileNotFoundError(f"Directory does not exist: {data_dir}")
-    
     for file in os.listdir(data_dir):
         if file.endswith(".sqlite"):
-            file_path = os.path.join(data_dir, file)
-            conn = sqlite3.connect(file_path)
-            
-            table_name = get_table_name(conn)
-            if not table_name:
-                print(f"No table found in {file}")
-                conn.close()
-                continue
-            
-            print(f"Reading from table: {table_name} in {file}")
-            
+            conn = sqlite3.connect(os.path.join(data_dir, file))
             chunksize = 100_000  # Process 100k rows at a time
 
             # Read in chunks to avoid memory overflow
             for df_chunk in pd.read_sql(
-                f"SELECT * FROM {table_name}", conn, chunksize=chunksize
+                "SELECT * FROM tripdata",
+                conn,
+                chunksize=chunksize,
+                parse_dates=['tpep_pickup_datetime']
             ):
-                # Ensure datetime conversion
-                if 'tpep_pickup_datetime' in df_chunk.columns:
-                    df_chunk['tpep_pickup_datetime'] = pd.to_datetime(df_chunk['tpep_pickup_datetime'])
-                    df_chunk['pickup_hour'] = df_chunk['tpep_pickup_datetime'].dt.hour
-                else:
-                    print(f"Column 'tpep_pickup_datetime' not found in {file}")
-                    continue
+                # Preprocessing steps
+                df_chunk['pickup_hour'] = df_chunk['tpep_pickup_datetime'].dt.hour
 
                 # Create fare_class
-                if 'fare_amount' in df_chunk.columns:
-                    bins = [-np.inf, 10, 30, 60, np.inf]
-                    labels = ["Class 1", "Class 2", "Class 3", "Class 4"]
-                    df_chunk['fare_class'] = pd.cut(
-                        df_chunk['fare_amount'],
-                        bins=bins,
-                        labels=labels,
-                        right=True,
-                        include_lowest=True
-                    )
-                else:
-                    print(f"Column 'fare_amount' not found in {file}")
-                    continue
+                bins = [-np.inf, 10, 30, 60, np.inf]
+                labels = ["Class 1", "Class 2", "Class 3", "Class 4"]
+                df_chunk['fare_class'] = pd.cut(
+                    df_chunk['fare_amount'],
+                    bins=bins,
+                    labels=labels,
+                    right=True,
+                    include_lowest=True
+                )
 
-                # Stratified sampling
+                # Stratified sampling in one step
+                # Stratify by both fare_class and pickup_hour
                 stratified = df_chunk.groupby(
                     by=['fare_class', 'pickup_hour'],
-                    observed=True
+                    observed=True  # Silence future warning
                 ).apply(
-                    lambda x: x.sample(frac=sample_frac, random_state=42),
-                    include_groups=False
+                    lambda x: x.sample(frac=sample_frac, random_state=42,
+                                      ignore_index=False),
+                    include_groups=False  # Silence deprecation warning
                 ).reset_index(drop=True)
 
                 all_dfs.append(stratified)
-            
             conn.close()
 
-    if not all_dfs:
-        raise ValueError("No valid data was found in the database files.")
+    # Concatenate all chunks and reset index
+    return pd.concat(
+    [df for df in all_dfs if not df.empty and not df.isna().all().all()],
+    ignore_index=True
+)
 
-    return pd.concat(all_dfs, ignore_index=True)
 
-# Usage
-df = load_and_sample(r"C:\Users\mceka\Desktop\Wa-vjezbe\Data-Science\data\2019", sample_frac=0.10)
+# Taking 10% of data as sample 
+df = load_and_sample(r"C:\Users\mceka\Desktop\Wa-vjezbe\Data-Science\taxi_data\2019", sample_frac=0.1)
 
-# Display the first few rows
-print(df.head())
 
 df.describe()
 
@@ -185,7 +157,6 @@ df["fare_class"] = pd.cut(df["fare_amount"], bins=bins, labels=labels)
 df.reset_index(drop=True, inplace=True)
 
 df.head()
-
 df.describe()
 
 # %%
@@ -288,8 +259,8 @@ from sklearn.decomposition import PCA
 import umap
 import matplotlib.pyplot as plt
 
-# Set NUMBA_NUM_THREADS first (before any imports)
-os.environ["NUMBA_NUM_THREADS"] = "8"  # Critical: Set before imports
+# # Set NUMBA_NUM_THREADS first (before any imports)
+# os.environ["NUMBA_NUM_THREADS"] = "8"  # Critical: Set before imports
 
 # --- Feature Engineering ---
 # 1. Extract hour from pickup datetime
@@ -422,99 +393,83 @@ plt.show()
 #%%
 # Step 5: Feature Engineering
 
-import os
 import pandas as pd
-import numpy as np
+import os
 
-#  Ensure the dataset (df) is loaded
-if "df" not in globals():
-    raise ValueError("Error: DataFrame 'df' is not loaded. Load your dataset first!")
+# Set the correct path for the CSV file
+csv_path = r"C:\Users\mceka\Desktop\Wa-vjezbe\Data-Science\taxi_data\taxi_zone_lookup.csv"
 
-# Check required columns before proceeding
-required_columns = {
-    "tpep_pickup_datetime", "trip_distance", "trip_duration",
-    "fare_amount", "passenger_count", "pulocationid", "dolocationid",
-    "ratecodeid", "payment_type"
-}
-missing_cols = required_columns - set(df.columns)
-if missing_cols:
-    raise ValueError(f"Error: Missing columns in dataframe: {missing_cols}")
+# Check if the file exists
+if not os.path.exists(csv_path):
+    raise FileNotFoundError(f"File not found: {csv_path}")
 
+# Load the CSV file
+zone_lookup = pd.read_csv(csv_path)
+
+# --- Feature Engineering ---
 # --- Time-Based Features ---
 df["pickup_day"] = df["tpep_pickup_datetime"].dt.dayofweek
 df["pickup_month"] = df["tpep_pickup_datetime"].dt.month
 
-#  Ensure 'hour' column exists before binning
-df["hour"] = df["tpep_pickup_datetime"].dt.hour
-
 # Binning pickup_hour into categories
 df["pickup_time_of_day"] = pd.cut(
-    df["hour"],
+    df["pickup_hour"],
     bins=[0, 6, 12, 18, 24],
-    labels=["Night", "Morning", "Afternoon", "Evening"],
-    right=False
+    labels=["Night", "Morning", "Afternoon", "Evening"]
 )
 
 # --- Speed Feature ---
 df["average_speed"] = df["trip_distance"] / (df["trip_duration"] / 60)  # miles per hour
-df["average_speed"] = df["average_speed"].replace([np.inf, -np.inf], np.nan).fillna(0)
 
 # --- Categorical Encoding ---
+# Encode RateCodeID and Payment_type (numeric codes)
 df["RateCodeID"] = df["ratecodeid"].astype("category").cat.codes
 df["payment_type"] = df["payment_type"].astype("category").cat.codes
 
 # --- Location Mapping ---
-file_path = "taxi_zone_lookup.csv"  #  Change this to the correct path if needed
+zone_dict = dict(zip(zone_lookup["LocationID"], zone_lookup["Zone"]))
+borough_dict = dict(zip(zone_lookup["LocationID"], zone_lookup["Borough"]))
 
-if os.path.exists(file_path):
-    zone_lookup = pd.read_csv(file_path)
-    zone_dict = dict(zip(zone_lookup["LocationID"], zone_lookup["Zone"]))
-    borough_dict = dict(zip(zone_lookup["LocationID"], zone_lookup["Borough"]))
-    
-    df["PULocationID"] = df["pulocationid"].map(zone_dict).fillna("Unknown")
-    df["DOLocationID"] = df["dolocationid"].map(zone_dict).fillna("Unknown")
-    df["PU_borough"] = df["pulocationid"].map(borough_dict).fillna("Unknown")
-    df["DO_borough"] = df["dolocationid"].map(borough_dict).fillna("Unknown")
+df["PULocationID"] = df["pulocationid"].map(zone_dict).fillna("Unknown")
+df["DOLocationID"] = df["dolocationid"].map(zone_dict).fillna("Unknown")
+df["PU_borough"] = df["pulocationid"].map(borough_dict).fillna("Unknown")
+df["DO_borough"] = df["dolocationid"].map(borough_dict).fillna("Unknown")
 
-    # One-hot encode pickup/dropoff boroughs
-    df = pd.get_dummies(df, columns=["PU_borough", "DO_borough"], prefix=["PU_B", "DO_B"], drop_first=True)
+# One-hot encode pickup/dropoff boroughs
+df = pd.get_dummies(df, columns=["PU_borough", "DO_borough"], prefix=["PU_B", "DO_B"], drop_first=True)
 
-    # --- Additional Features ---
-    # Distance to/from Manhattan
-    manhattan_id = zone_lookup[zone_lookup["Borough"] == "Manhattan"]["LocationID"].values
-    df["is_pickup_manhattan"] = df["pulocationid"].isin(manhattan_id).astype(int)
-    df["is_dropoff_manhattan"] = df["dolocationid"].isin(manhattan_id).astype(int)
+# --- Additional Features ---
+# Distance to/from Manhattan
+manhattan_id = zone_lookup[zone_lookup["Borough"] == "Manhattan"]["LocationID"].values
+df["is_pickup_manhattan"] = df["pulocationid"].isin(manhattan_id).astype(int)
+df["is_dropoff_manhattan"] = df["dolocationid"].isin(manhattan_id).astype(int)
 
-    # Distance to/from Airports
-    airport_ids = zone_lookup[zone_lookup["service_zone"] == "Airports"]["LocationID"].values
-    df["is_pickup_airport"] = df["pulocationid"].isin(airport_ids).astype(int)
-    df["is_dropoff_airport"] = df["dolocationid"].isin(airport_ids).astype(int)
-
-else:
-    print(f" Warning: File '{file_path}' not found! Location mapping features will be skipped.")
+# Distance to/from Airports
+airport_ids = zone_lookup[zone_lookup["service_zone"] == "Airports"]["LocationID"].values
+df["is_pickup_airport"] = df["pulocationid"].isin(airport_ids).astype(int)
+df["is_dropoff_airport"] = df["dolocationid"].isin(airport_ids).astype(int)
 
 # --- Final Feature List ---
 print("\nFinal Features:")
 print(df.columns.tolist())
 
-
 print(*df.columns.tolist(), sep='\n')
 
 #%%
-# Step 6: Model Selection
-
 # --- Model Selection ---
-# --- Define Features and Targets ---
-# Features for regression and classification tasks
 
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
+# --- Define Features and Targets ---
+
+# Features for regression and classification tasks
 X_reg = df[[
     "trip_distance",          # Distance traveled
-    "hour",            # Hour of pickup
-    "average_speed",          # Average speed during the trip
+    "pickup_hour",                   # Hour of pickup (engineered feature)
+    "average_speed",                  # Average speed during the trip (renamed from `average_speed`)
     "RateCodeID",             # Encoded rate code
     "payment_type",           # Encoded payment type
-    "is_weekend",             # Weekend flag
-    "pickup_time_of_day",     # Time of day category
     "is_pickup_manhattan",    # Pickup in Manhattan
     "is_dropoff_manhattan",   # Dropoff in Manhattan
     "is_pickup_airport",      # Pickup at airport
@@ -538,6 +493,8 @@ y_reg = df["fare_amount"]
 y_clf = df["fare_class"]
 
 # --- Split Data into Training and Testing Sets ---
+from sklearn.model_selection import train_test_split
+
 # Regression split
 X_train_reg, X_test_reg, y_train_reg, y_test_reg = train_test_split(
     X_reg, y_reg, test_size=0.2, random_state=42
@@ -549,17 +506,35 @@ X_train_clf, X_test_clf, y_train_clf, y_test_clf = train_test_split(
 )
 
 # --- Regression Models ---
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_score
+
 regression_models = {
     "Linear Regression": LinearRegression(),  # Baseline regression model
     "Decision Tree Regressor": DecisionTreeRegressor(random_state=42),  # Non-linear model
-    "Random Forest Regressor": RandomForestRegressor(random_state=42)  # Ensemble model
+    #"Random Forest Regressor": RandomForestRegressor(random_state=42)  # Ensemble model
 }
 
 # --- Classification Models ---
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+# classification_models = {
+#     "Logistic Regression": LogisticRegression(max_iter=1000),  # Baseline classification model
+#     "Decision Tree Classifier": DecisionTreeClassifier(random_state=42),  # Non-linear model
+#     #"Random Forest Classifier": RandomForestClassifier(random_state=42)  # Ensemble model
+# }
+# --- Classification Models with Scaling ---
 classification_models = {
-    "Logistic Regression": LogisticRegression(max_iter=1000),  # Baseline classification model
-    "Decision Tree Classifier": DecisionTreeClassifier(random_state=42),  # Non-linear model
-    "Random Forest Classifier": RandomForestClassifier(random_state=42)  # Ensemble model
+    "Logistic Regression": Pipeline([
+        ("scaler", StandardScaler()),
+        ("logreg", LogisticRegression(max_iter=2000))  # Increased max_iter
+    ]),
+    "Decision Tree Classifier": DecisionTreeClassifier(random_state=42)
+    # Add RandomForestClassifier here if needed
 }
 
 # --- Validation Method: K-Fold Cross-Validation ---
@@ -573,6 +548,8 @@ print("\nClassification Model Evaluation:")
 for name, model in classification_models.items():
     scores = cross_val_score(model, X_train_clf, y_train_clf, cv=5, scoring="accuracy")
     print(f"{name} Cross-Validation Accuracy: {scores.mean():.2f}")
+
+
 
 # --- Justification for Validation Method ---
 """
